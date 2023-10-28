@@ -1,0 +1,572 @@
+-- Tabela de Clientes
+CREATE TABLE Clientes (
+    ClienteID INT PRIMARY KEY AUTO_INCREMENT,
+    Nome VARCHAR(255) NOT NULL,
+    Email VARCHAR(255) UNIQUE NOT NULL,
+    DataCadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Status ENUM('Ativo', 'Inativo') DEFAULT 'Ativo'
+);
+
+-- Tabela de Produtos
+CREATE TABLE Produtos (
+    ProdutoID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeProduto VARCHAR(255) NOT NULL,
+    Descricao TEXT,
+    Preco DECIMAL(10, 2) NOT NULL,
+    CategoriaID INT,
+    FOREIGN KEY (CategoriaID) REFERENCES CategoriasProdutos(CategoriaID)
+);
+
+-- Tabela de Pedidos
+CREATE TABLE Pedidos (
+    PedidoID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    DataPedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    StatusPedido ENUM('Em Processamento', 'Enviado', 'Entregue', 'Cancelado') DEFAULT 'Em Processamento',
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID)
+);
+
+-- Tabela de Itens de Pedido
+CREATE TABLE ItensPedido (
+    ItemPedidoID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ProdutoID INT NOT NULL,
+    Quantidade INT NOT NULL,
+    PrecoUnitario DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Categorias de Produtos
+CREATE TABLE CategoriasProdutos (
+    CategoriaID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeCategoria VARCHAR(255) NOT NULL,
+    DescricaoCategoria TEXT,
+    CategoriaPaiID INT, -- Para suportar hierarquia de categorias
+    FOREIGN KEY (CategoriaPaiID) REFERENCES CategoriasProdutos(CategoriaID)
+);
+
+-- Tabela de Usuários
+CREATE TABLE Usuarios (
+    UsuarioID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeUsuario VARCHAR(255) NOT NULL,
+    Senha VARCHAR(255) NOT NULL,
+    Tipo ENUM('Cliente', 'Funcionario', 'Admin') NOT NULL
+);
+
+-- Tabela de Funcionários
+CREATE TABLE Funcionarios (
+    FuncionarioID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeFuncionario VARCHAR(255) NOT NULL,
+    Cargo VARCHAR(255),
+    DataContratacao DATE,
+    Salario DECIMAL(10, 2),
+    UsuarioID INT,
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- Tabela de Admins
+CREATE TABLE Admins (
+    AdminID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeAdmin VARCHAR(255) NOT NULL,
+    UsuarioID INT,
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- Tabela de Armazenamento de Produtos
+CREATE TABLE ArmazenamentoProdutos (
+    ArmazenamentoID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    QuantidadeEmEstoque INT NOT NULL,
+    DataAtualizacaoEstoque TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    LocalizacaoEstoque VARCHAR(255),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Historico de Promoções (Aprimorada)
+CREATE TABLE HistoricoPromocoesAprimorado (
+    HistoricoPromocaoID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    PromocaoID INT NOT NULL,
+    DataAplicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    DescontoAdicional DECIMAL(5, 2) NOT NULL,
+    DataInicio DATE,
+    DataFim DATE,
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (PromocaoID) REFERENCES Promocoes(PromocaoID)
+);
+
+-- Tabela de Informações de Contato de Clientes
+CREATE TABLE InformacoesContatoClientes (
+    InformacoesContatoID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    TelefoneContato VARCHAR(20),
+    EnderecoContato VARCHAR(255),
+    EmailContato VARCHAR(255),
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID)
+);
+
+-- Tabela de Auditoria Avançada (Aprimorada)
+CREATE TABLE AuditoriaAvancadaAprimorada (
+    AuditoriaID INT PRIMARY KEY AUTO_INCREMENT,
+    TabelaAcessada VARCHAR(255) NOT NULL,
+    AcaoRealizada ENUM('Inserção', 'Atualização', 'Exclusão') NOT NULL,
+    RegistroID INT NOT NULL,
+    DataAcao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UsuarioID INT NOT NULL,
+    DetalhesAcao JSON,
+    FOREIGN KEY (UsuarioID) REFERENCES Usuarios(UsuarioID)
+);
+
+-- Tabela de Trocas de Produtos
+CREATE TABLE TrocasProdutos (
+    TrocaID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ProdutoID INT NOT NULL,
+    Quantidade INT NOT NULL,
+    DataTroca TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Motivo TEXT,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Detalhes de Pagamento de Clientes
+CREATE TABLE DetalhesPagamentoClientes (
+    DetalhePagamentoClienteID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    DataPagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ValorPago DECIMAL(10, 2) NOT NULL,
+    MetodoPagamento VARCHAR(255) NOT NULL,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID)
+);
+
+-- Tabela de Devoluções de Clientes
+CREATE TABLE DevolucoesClientes (
+    DevolucaoClienteID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    PedidoID INT NOT NULL,
+    ProdutoID INT NOT NULL,
+    Quantidade INT NOT NULL,
+    DataDevolucao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Motivo TEXT,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Transações Financeiras
+CREATE TABLE TransacoesFinanceiras (
+    TransacaoID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    TipoTransacao ENUM('Pagamento', 'Reembolso', 'Taxa', 'Outro') NOT NULL,
+    Valor DECIMAL(10, 2) NOT NULL,
+    DataTransacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    DetalhesTransacao TEXT,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Histórico de Acesso de Administradores
+CREATE TABLE HistoricoAcessoAdministradores (
+    HistoricoAcessoAdminID INT PRIMARY KEY AUTO_INCREMENT,
+    AdminID INT NOT NULL,
+    DataAcesso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Acao VARCHAR(255) NOT NULL,
+    FOREIGN KEY (AdminID) REFERENCES Admins(AdminID)
+);
+
+-- Tabela de Avaliações de Produtos
+CREATE TABLE AvaliacoesProdutos (
+    AvaliacaoID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    ClienteID INT NOT NULL,
+    DataAvaliacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Pontuacao INT NOT NULL CHECK (Pontuacao >= 1 AND Pontuacao <= 5),
+    Comentario TEXT,
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID)
+);
+
+-- Tabela de Informações de Fornecedores (Aprimorada)
+CREATE TABLE InformacoesFornecedoresAprimorada (
+    FornecedorID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeFornecedor VARCHAR(255) NOT NULL,
+    CNPJ VARCHAR(20) UNIQUE NOT NULL,
+    EnderecoFornecedor VARCHAR(255),
+    EmailFornecedor VARCHAR(255) UNIQUE NOT NULL,
+    Telefone VARCHAR(20),
+    SiteFornecedor VARCHAR(255),
+    Observacoes TEXT,
+    ClassificacaoFornecedor ENUM('Excelente', 'Bom', 'Regular', 'Ruim') DEFAULT 'Regular'
+);
+
+-- Tabela de Campanhas de Marketing
+CREATE TABLE CampanhasMarketing (
+    CampanhaID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeCampanha VARCHAR(255) NOT NULL,
+    DataInicio DATE NOT NULL,
+    DataFim DATE NOT NULL,
+    Orçamento DECIMAL(10, 2) NOT NULL,
+    Descrição TEXT,
+    Status ENUM('Ativa', 'Pausada', 'Concluída') DEFAULT 'Ativa'
+);
+
+-- Tabela de Produtos Complementares
+CREATE TABLE ProdutosComplementares (
+    ProdutoComplementarID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    ProdutoRelacionadoID INT NOT NULL,
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (ProdutoRelacionadoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Endereços de Clientes
+CREATE TABLE EnderecosClientes (
+    EnderecoID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    TipoEndereco ENUM('Entrega', 'Cobrança', 'Outro') NOT NULL,
+    Rua VARCHAR(255) NOT NULL,
+    Cidade VARCHAR(255) NOT NULL,
+    CEP VARCHAR(10) NOT NULL,
+    Estado CHAR(2) NOT NULL,
+    País VARCHAR(50) NOT NULL,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID)
+);
+
+-- Tabela de Reembolsos de Clientes
+CREATE TABLE ReembolsosClientes (
+    ReembolsoClienteID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    PedidoID INT NOT NULL,
+    ValorReembolso DECIMAL(10, 2) NOT NULL,
+    DataReembolso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Motivo TEXT,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Detalhes de Expedição de Produtos
+CREATE TABLE DetalhesExpedicao (
+    DetalheExpedicaoID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ProdutoID INT NOT NULL,
+    Quantidade INT NOT NULL,
+    DataExpedicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    TransportadoraID INT NOT NULL,
+    Status ENUM('Em Processamento', 'Enviado', 'Entregue', 'Atrasado', 'Cancelado') DEFAULT 'Em Processamento',
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (TransportadoraID) REFERENCES Transportadoras(TransportadoraID)
+);
+
+-- Tabela de Histórico de Atividades de Funcionários
+CREATE TABLE HistoricoAtividadesFuncionarios (
+    HistoricoAtividadeID INT PRIMARY KEY AUTO_INCREMENT,
+    FuncionarioID INT NOT NULL,
+    DataAtividade TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Atividade VARCHAR(255) NOT NULL,
+    FOREIGN KEY (FuncionarioID) REFERENCES Funcionarios(FuncionarioID)
+);
+
+-- Tabela de Locais de Envio
+CREATE TABLE LocaisEnvio (
+    LocalEnvioID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeLocal VARCHAR(255) NOT NULL,
+    EnderecoLocal VARCHAR(255) NOT NULL,
+    Cidade VARCHAR(255) NOT NULL,
+    Estado CHAR(2) NOT NULL,
+    CEP VARCHAR(10) NOT NULL,
+    País VARCHAR(50) NOT NULL
+);
+
+-- Tabela de Fabricantes
+CREATE TABLE Fabricantes (
+    FabricanteID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeFabricante VARCHAR(255) NOT NULL,
+    CNPJ VARCHAR(20) UNIQUE NOT NULL,
+    EnderecoFabricante VARCHAR(255),
+    EmailFabricante VARCHAR(255) UNIQUE NOT NULL,
+    Telefone VARCHAR(20),
+    SiteFabricante VARCHAR(255),
+    Observacoes TEXT
+);
+
+-- Tabela de Detalhes de Impostos sobre Vendas
+CREATE TABLE DetalhesImpostosVendas (
+    ImpostoVendasID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ValorImposto DECIMAL(10, 2) NOT NULL,
+    DataPagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Promoções de Produtos
+CREATE TABLE PromocoesProdutos (
+    PromocaoProdutoID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    NomePromocao VARCHAR(255) NOT NULL,
+    Desconto DECIMAL(5, 2) NOT NULL,
+    DataInicio DATE NOT NULL,
+    DataFim DATE NOT NULL,
+    Ativa BOOLEAN DEFAULT true,
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Detalhes de Entregas de Pedidos
+CREATE TABLE DetalhesEntregas (
+    DetalheEntregaID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    DataEntrega TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    NomeRecebedor VARCHAR(255) NOT NULL,
+    AssinaturaEntrega BLOB, -- Pode armazenar a assinatura eletrônica
+    Status ENUM('Em Rota', 'Entregue', 'Atrasado', 'Cancelado') DEFAULT 'Em Rota',
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Informações de Fornecedores (Aprimorada)
+CREATE TABLE InformacoesFornecedores (
+    FornecedorID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeFornecedor VARCHAR(255) NOT NULL,
+    CNPJ VARCHAR(20) UNIQUE NOT NULL,
+    EnderecoFornecedor VARCHAR(255),
+    EmailFornecedor VARCHAR(255) UNIQUE NOT NULL,
+    Telefone VARCHAR(20),
+    SiteFornecedor VARCHAR(255),
+    Observacoes TEXT,
+    ClassificacaoFornecedor ENUM('Excelente', 'Bom', 'Regular', 'Ruim') DEFAULT 'Regular'
+);
+
+-- Tabela de Campanhas de Marketing
+CREATE TABLE CampanhasMarketing (
+    CampanhaID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeCampanha VARCHAR(255) NOT NULL,
+    DataInicio DATE NOT NULL,
+    DataFim DATE NOT NULL,
+    Orçamento DECIMAL(10, 2) NOT NULL,
+    Descrição TEXT,
+    Status ENUM('Ativa', 'Pausada', 'Concluída') DEFAULT 'Ativa'
+);
+
+-- Tabela de Produtos Complementares
+CREATE TABLE ProdutosComplementares (
+    ProdutoComplementarID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    ProdutoRelacionadoID INT NOT NULL,
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (ProdutoRelacionadoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Endereços de Clientes
+CREATE TABLE EnderecosClientes (
+    EnderecoID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    TipoEndereco ENUM('Entrega', 'Cobrança', 'Outro') NOT NULL,
+    Rua VARCHAR(255) NOT NULL,
+    Cidade VARCHAR(255) NOT NULL,
+    CEP VARCHAR(10) NOT NULL,
+    Estado CHAR(2) NOT NULL,
+    País VARCHAR(50) NOT NULL,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID)
+);
+
+-- Tabela de Reembolsos de Clientes
+CREATE TABLE ReembolsosClientes (
+    ReembolsoClienteID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    PedidoID INT NOT NULL,
+    ValorReembolso DECIMAL(10, 2) NOT NULL,
+    DataReembolso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Motivo TEXT,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Detalhes de Expedição de Produtos
+CREATE TABLE DetalhesExpedicao (
+    DetalheExpedicaoID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ProdutoID INT NOT NULL,
+    Quantidade INT NOT NULL,
+    DataExpedicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    TransportadoraID INT NOT NULL,
+    Status ENUM('Em Processamento', 'Enviado', 'Entregue', 'Atrasado', 'Cancelado') DEFAULT 'Em Processamento',
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (TransportadoraID) REFERENCES Transportadoras(TransportadoraID)
+);
+
+-- Tabela de Histórico de Atividades de Funcionários
+CREATE TABLE HistoricoAtividadesFuncionarios (
+    HistoricoAtividadeID INT PRIMARY KEY AUTO_INCREMENT,
+    FuncionarioID INT NOT NULL,
+    DataAtividade TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Atividade VARCHAR(255) NOT NULL,
+    FOREIGN KEY (FuncionarioID) REFERENCES Funcionarios(FuncionarioID)
+);
+
+-- Tabela de Locais de Envio
+CREATE TABLE LocaisEnvio (
+    LocalEnvioID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeLocal VARCHAR(255) NOT NULL,
+    EnderecoLocal VARCHAR(255) NOT NULL,
+    Cidade VARCHAR(255) NOT NULL,
+    Estado CHAR(2) NOT NULL,
+    CEP VARCHAR(10) NOT NULL,
+    País VARCHAR(50) NOT NULL
+);
+
+-- Tabela de Fabricantes
+CREATE TABLE Fabricantes (
+    FabricanteID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeFabricante VARCHAR(255) NOT NULL,
+    CNPJ VARCHAR(20) UNIQUE NOT NULL,
+    EnderecoFabricante VARCHAR(255),
+    EmailFabricante VARCHAR(255) UNIQUE NOT NULL,
+    Telefone VARCHAR(20),
+    SiteFabricante VARCHAR(255),
+    Observacoes TEXT
+);
+
+-- Tabela de Detalhes de Impostos sobre Vendas
+CREATE TABLE DetalhesImpostosVendas (
+    ImpostoVendasID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ValorImposto DECIMAL(10, 2) NOT NULL,
+    DataPagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Promoções de Produtos
+CREATE TABLE PromocoesProdutos (
+    PromocaoProdutoID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    NomePromocao VARCHAR(255) NOT NULL,
+    Desconto DECIMAL(5, 2) NOT NULL,
+    DataInicio DATE NOT NULL,
+    DataFim DATE NOT NULL,
+    Ativa BOOLEAN DEFAULT true,
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Detalhes de Entregas de Pedidos
+CREATE TABLE DetalhesEntregas (
+    DetalheEntregaID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    DataEntrega TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    NomeRecebedor VARCHAR(255) NOT NULL,
+    AssinaturaEntrega BLOB, -- Pode armazenar a assinatura eletrônica
+    Status ENUM('Em Rota', 'Entregue', 'Atrasado', 'Cancelado') DEFAULT 'Em Rota',
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Informações de Fornecedores (Aprimorada)
+CREATE TABLE InformacoesFornecedoresAprimorada (
+    FornecedorID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeFornecedor VARCHAR(255) NOT NULL,
+    CNPJ VARCHAR(20) UNIQUE NOT NULL,
+    EnderecoFornecedor VARCHAR(255),
+    EmailFornecedor VARCHAR(255) UNIQUE NOT NULL,
+    Telefone VARCHAR(20),
+    SiteFornecedor VARCHAR(255),
+    Observacoes TEXT,
+    ClassificacaoFornecedor ENUM('Excelente', 'Bom', 'Regular', 'Ruim') DEFAULT 'Regular'
+);
+
+-- Tabela de Campanhas de Marketing
+CREATE TABLE CampanhasMarketing (
+    CampanhaID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeCampanha VARCHAR(255) NOT NULL,
+    DataInicio DATE NOT NULL,
+    DataFim DATE NOT NULL,
+    Orçamento DECIMAL(10, 2) NOT NULL,
+    Descrição TEXT,
+    Status ENUM('Ativa', 'Pausada', 'Concluída') DEFAULT 'Ativa'
+);
+
+-- Tabela de Produtos Complementares
+CREATE TABLE ProdutosComplementares (
+    ProdutoComplementarID INT PRIMARY KEY AUTO_INCREMENT,
+    ProdutoID INT NOT NULL,
+    ProdutoRelacionadoID INT NOT NULL,
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (ProdutoRelacionadoID) REFERENCES Produtos(ProdutoID)
+);
+
+-- Tabela de Endereços de Clientes
+CREATE TABLE EnderecosClientes (
+    EnderecoID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    TipoEndereco ENUM('Entrega', 'Cobrança', 'Outro') NOT NULL,
+    Rua VARCHAR(255) NOT NULL,
+    Cidade VARCHAR(255) NOT NULL,
+    CEP VARCHAR(10) NOT NULL,
+    Estado CHAR(2) NOT NULL,
+    País VARCHAR(50) NOT NULL,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID)
+);
+
+-- Tabela de Reembolsos de Clientes
+CREATE TABLE ReembolsosClientes (
+    ReembolsoClienteID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT NOT NULL,
+    PedidoID INT NOT NULL,
+    ValorReembolso DECIMAL(10, 2) NOT NULL,
+    DataReembolso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Motivo TEXT,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
+
+-- Tabela de Detalhes de Expedição de Produtos
+CREATE TABLE DetalhesExpedicao (
+    DetalheExpedicaoID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ProdutoID INT NOT NULL,
+    Quantidade INT NOT NULL,
+    DataExpedicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    TransportadoraID INT NOT NULL,
+    Status ENUM('Em Processamento', 'Enviado', 'Entregue', 'Atrasado', 'Cancelado') DEFAULT 'Em Processamento',
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID),
+    FOREIGN KEY (TransportadoraID) REFERENCES Transportadoras(TransportadoraID)
+);
+
+-- Tabela de Histórico de Atividades de Funcionários
+CREATE TABLE HistoricoAtividadesFuncionarios (
+    HistoricoAtividadeID INT PRIMARY KEY AUTO_INCREMENT,
+    FuncionarioID INT NOT NULL,
+    DataAtividade TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Atividade VARCHAR(255) NOT NULL,
+    FOREIGN KEY (FuncionarioID) REFERENCES Funcionarios(FuncionarioID)
+);
+
+-- Tabela de Locais de Envio
+CREATE TABLE LocaisEnvio (
+    LocalEnvioID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeLocal VARCHAR(255) NOT NULL,
+    EnderecoLocal VARCHAR(255) NOT NULL,
+    Cidade VARCHAR(255) NOT NULL,
+    Estado CHAR(2) NOT NULL,
+    CEP VARCHAR(10) NOT NULL,
+    País VARCHAR(50) NOT NULL
+);
+
+-- Tabela de Fabricantes
+CREATE TABLE Fabricantes (
+    FabricanteID INT PRIMARY KEY AUTO_INCREMENT,
+    NomeFabricante VARCHAR(255) NOT NULL,
+    CNPJ VARCHAR(20) UNIQUE NOT NULL,
+    EnderecoFabricante VARCHAR(255),
+    EmailFabricante VARCHAR(255) UNIQUE NOT NULL,
+    Telefone VARCHAR(20),
+    SiteFabricante VARCHAR(255),
+    Observacoes TEXT
+);
+
+-- Tabela de Detalhes de Impostos sobre Vendas
+CREATE TABLE DetalhesImpostosVendas (
+    ImpostoVendasID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT NOT NULL,
+    ValorImposto DECIMAL(10, 2) NOT NULL,
+    DataPagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID)
+);
